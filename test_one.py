@@ -5,6 +5,8 @@ from BeautifulSoup import BeautifulSoup
 
 SCHOOL = "santafe"
 page_results_increment_by_ten = 0
+Book_Array = []
+Extra_Books_Array = []
 
 class BookInfo:
 	pass
@@ -13,17 +15,17 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 	total_books = 0
 	title_array = []
 	#while (True):
-	while (page_results_increment_by_ten < 10):
+	while (page_results_increment_by_ten < 50):
 			url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 			req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
 			con = urllib2.urlopen( req )
-			print "url open"
+			print "URL Open"
 			stringURL = con.read()
 			con.close()
 
 			soup = BeautifulSoup(stringURL)
-			print "soup made"
+			print "Soup Made"
 
 			#print soup
 
@@ -32,28 +34,26 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 				for td in dd.findAll("td"):
 					try:
 						if 'TITLE:' in td.text:
-							print "title found"
+							print "Title Found: ",
 							temp_string = td.text.replace("TITLE:","")
 							print temp_string 
 							title_array.append(temp_string)
 							count+=1
 							total_books+=1
 					except:
-						print "no thread found"
+						print "No Title in 'td'"
 
 			page_results_increment_by_ten += 10
 			if (count < 10):
 				break
-			print count
 
-	print "total books equals:" + str(total_books)
+	print "Total Books Found: " + str(total_books)
 	return title_array
 
 def getCourseFromSoup(soup):
 	try:
 		for div in soup.findAll("div"):
 			if "Course" in div.text:
-				print div.text
 				regex = re.compile("[\d]Course.+Select")
 				match = regex.search(div.text)
 				match = re.sub("[\d]Course:", "", match.group())
@@ -62,7 +62,7 @@ def getCourseFromSoup(soup):
 		
 	except:
 		print "Course Error"
-		return
+		return "nil"
 
 def getEditionFromSoup(soup):
 	try:
@@ -77,7 +77,7 @@ def getEditionFromSoup(soup):
 				return edition 
 	except:
 		print "Edition ERROR"
-		return
+		return "nil"
 
 def getISBNFromSoup(soup):
 	try:
@@ -90,23 +90,31 @@ def getISBNFromSoup(soup):
 				return ISBN
 	except:
 		print "ISBN ERROR"
-	return
+		return "nil"
 
 def getUsedPriceFromSoup(soup):
-	for tr in soup.findAll("tr"):
-		if "Used" in tr.text:
-			for td in tr.findAll("td"):
-				if "$" in td.text:
-					usedPrice = str(td.text)
-					return usedPrice
+	try:
+		for tr in soup.findAll("tr"):
+			if "Used" in tr.text:
+				for td in tr.findAll("td"):
+					if "$" in td.text:
+						usedPrice = str(td.text)
+						return usedPrice
+	except:
+		print "Used Price ERROR"
+		return "nil"
 
 def getNewPriceFromSoup(soup):
-	for tr in soup.findAll("tr"):
-		if "New" in tr.text:
-			for td in tr.findAll("td"):
-				if "$" in td.text:
-					newPrice = str(td.text)
-	return newPrice
+	try:
+		for tr in soup.findAll("tr"):
+			if "New" in tr.text:
+				for td in tr.findAll("td"):
+					if "$" in td.text:
+						newPrice = str(td.text)
+						return newPrice
+	except:
+		print "New Price ERROR"
+		return "nil"
 
 def getBookInfoFromPage(link):
 	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/" + link
@@ -124,11 +132,6 @@ def getBookInfoFromPage(link):
 	ISBN = getISBNFromSoup(soup)
 	edition = getEditionFromSoup(soup)
 	course = getCourseFromSoup(soup)
-	print "Used: " + usedPrice
-	print "New: " + newPrice
-	print "ISBN: " + ISBN
-	print "Edition: " + edition
-	print "Course: " + course
 
 	book = BookInfo()
 	book.usedPrice = usedPrice
@@ -137,6 +140,7 @@ def getBookInfoFromPage(link):
 	book.edition = edition
 	book.course = course
 	
+	print "Book Info Successfully Stored"
 	return book
 
 def getPriceLinkFromLink(link):
@@ -153,66 +157,90 @@ def getPriceLinkFromLink(link):
 	for img in soup.findAll("img"):
 		try:
 			if "image1" in img.get('name'):
-				print "IMAGE FOUND"
+				print "IMG Tag Found"
 				price_link = str(img.get("onclick"))
-				print price_link
 				price_link = price_link.replace("refreshTBDisplay('","")
 				price_link = price_link.replace("');","")
-				print price_link
-				return getBookInfoFromPage(price_link)
-				
-				break
+				print "URL for Prices: " + price_link
+				return price_link
 		except:
 			print "."
 	return
 
 
-def printBook(book):
-	print book.title +  "    " + book.ISBN + "     " + book.edition + "     " + book.course + "      " + book.usedPrice + "     " + book.newPrice	
+def printBook(book,number):
 
-def searchWithTitles(title_array):
-	#for title in title_array:
-		title = title_array[4]
-		time.sleep(20)
+	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------------"
+	print str(number).rjust(3," "),
+	print "Title: " + book.title.ljust(50," "), 
+	print "  ISBN: ".rjust(10," ") + book.ISBN.ljust(15," ") + "  Edition: " + book.edition.ljust(8," ") + "  Course: " + book.course.ljust(30," ") + "  Used: " + book.usedPrice.ljust(8," ") + "  New: " + book.newPrice.ljust(8," ")	
+
+def searchWithTitles(title_array,bookarray,extrabooksarray):
+#	for title in title_array:
+		title = title_array[45]
+		print "Pausing for 10 seconds to avoid connection refusal.."
+		time.sleep(10)
 		title_url = str(title).replace("&amp;","%26")	
 		title_url = title_url.replace(" ","+")
 		title_url = title_url.replace(":","%3A")
 		title_url = title_url.replace("/","%2F")
-		print title_url
 		url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/ProductSearchCommand?storeId=22566&catalogId=10001&langId=-1&extSearchEnabled=G+&displayImage=Y+&search=" + title_url
-		print url
+		print "Generated Search URL: " + url
 		req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
+		print "Connecting.. this can sometimes take a bit"
 		con = urllib2.urlopen( req )
 		print "Opening Search Page"
 		stringURL = con.read()
 		con.close()
 
 		soup = BeautifulSoup(stringURL)
-		print "Search soup made"
-#		print soup
+		print "Search Soup Made"
 		for td in soup.findAll("td"):
 			try:
-				print "In soup"
 				if str(title) in td.text:
-					print "Title found" 
-					print str(title)
+					regex = re.compile("DESCRIPTION.+AUTHOR")
+					match = regex.search(td.text)
+					match = re.sub("DESCRIPTION:", "", match.group())
+					titleOfBookInLoop = str(match).replace("AUTHOR","")
+					print "TITLE OF BOOK IN LOOP: " + titleOfBookInLoop
+
 					for link in td.findAll("a"):
 						if "TextbookDetailView" in link.get('href'):
-							print "link found"
+							print "Book Link Found"
 							link = str(link.get('href')).replace("&amp;","&")
+#							link = link.replace(" ","+")
+#							link = link.replace(":","%3A")
+#							link = link.replace("/","%2F")
 							print link
-							book = getPriceLinkFromLink(link)	
-							book.title = title
-							printBook(book)
+							priceLink = getPriceLinkFromLink(link)	
+							book = getBookInfoFromPage(priceLink) 
+							book.title = titleOfBookInLoop
+							if (title == titleOfBookInLoop):
+								print "Book Added to Book Array"
+								bookarray.append(book)
+							else:
+								print "Book Added to Extra Book Array"
+								extrabooksarray.append(book)
 			except:
-				print "title not found"
+				print "Title Not Found in 'td' SKIPPING"
 		
-#	return
-		return
+#	return bookarray
+		return bookarray
 
 
 
 titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL)
-print titleArray
-searchWithTitles(titleArray)
-print "----------------------------------------------this is the end-------------------------------------------------------"
+Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array)
+bookNumber = 0
+extraBookNumber = 0
+for book in Book_Array:
+	bookNumber+=1
+	printBook(book,bookNumber)
+print "Number of Books: " + str(len(Book_Array))
+print "\n\n"
+print "----------------------------------------------EXTRA BOOKS--------------------------------------------------------------------------------"
+for book in Extra_Books_Array:
+	extraBookNumber+=1
+	printBook(book,extraBookNumber)	
+print "Number of Books: " + str(len(Extra_Books_Array))
+print "----------------------------------------------this is the end--------------------------------------------------------------------------------"
