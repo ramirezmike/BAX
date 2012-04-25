@@ -44,6 +44,53 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 	print "total books equals:" + str(total_books)
 	return title_array
 
+def getPriceFromPage(link):
+	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/" + link
+	request_url = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
+	connection = urllib2.urlopen( request_url )
+	print "Opening Price Page"
+	stringURL = connection.read()
+	connection.close()
+
+	soup = BeautifulSoup(stringURL)
+	print "Price Page Soup Made"
+
+	
+	for td in soup.findAll("td"):
+		try:
+			if "pTop6" in td.get('class'):
+				print "Found Prices"
+				print td.text
+		except:
+			print "Price Not Found"
+	return
+
+def getPriceLinkFromLink(link):
+	url = "http://santafe.bncollege.com" + link
+	request_url = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
+	connection = urllib2.urlopen( request_url )
+	print "Opening Book Page"	
+	stringURL = connection.read()
+	connection.close()
+
+	soup = BeautifulSoup(stringURL)
+	print "Book Page Soup Made"
+
+	for img in soup.findAll("img"):
+		try:
+			if "image1" in img.get('name'):
+				print "IMAGE FOUND"
+				price_link = str(img.get("onclick"))
+				print price_link
+				price_link = price_link.replace("refreshTBDisplay('","")
+				price_link = price_link.replace("');","")
+				print price_link
+				getPriceFromPage(price_link)
+				break
+		except:
+			print "."
+	return
+
 
 def searchWithTitles(title_array):
 #	for title in title_array:
@@ -66,7 +113,9 @@ def searchWithTitles(title_array):
 					for link in td.findAll("a"):
 						if "TextbookDetailView" in link.get('href'):
 							print "link found"
-							print str(link.get('href')).replace("&amp;","&")
+							link = str(link.get('href')).replace("&amp;","&")
+							print link
+							getPriceLinkFromLink(link)	
 			except:
 				print "title not found"
 		
