@@ -1,9 +1,13 @@
 import urllib2
 import re
+import time
 from BeautifulSoup import BeautifulSoup
 
 SCHOOL = "santafe"
 page_results_increment_by_ten = 0
+
+class BookInfo:
+	pass
 
 def getBookTitles(page_results_increment_by_ten,SCHOOL):
 	total_books = 0
@@ -44,6 +48,21 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 
 	print "total books equals:" + str(total_books)
 	return title_array
+
+def getCourseFromSoup(soup):
+	try:
+		for div in soup.findAll("div"):
+			if "Course" in div.text:
+				print div.text
+				regex = re.compile("[\d]Course.+Select")
+				match = regex.search(div.text)
+				match = re.sub("[\d]Course:", "", match.group())
+				course = str(match).replace("Select","")
+				return course 
+		
+	except:
+		print "Course Error"
+		return
 
 def getEditionFromSoup(soup):
 	try:
@@ -104,11 +123,21 @@ def getBookInfoFromPage(link):
 	newPrice = getNewPriceFromSoup(soup)
 	ISBN = getISBNFromSoup(soup)
 	edition = getEditionFromSoup(soup)
+	course = getCourseFromSoup(soup)
 	print "Used: " + usedPrice
 	print "New: " + newPrice
 	print "ISBN: " + ISBN
 	print "Edition: " + edition
-	return
+	print "Course: " + course
+
+	book = BookInfo()
+	book.usedPrice = usedPrice
+	book.newPrice = newPrice
+	book.ISBN = ISBN
+	book.edition = edition
+	book.course = course
+	
+	return book
 
 def getPriceLinkFromLink(link):
 	url = "http://santafe.bncollege.com" + link
@@ -130,18 +159,28 @@ def getPriceLinkFromLink(link):
 				price_link = price_link.replace("refreshTBDisplay('","")
 				price_link = price_link.replace("');","")
 				print price_link
-				getBookInfoFromPage(price_link)
+				return getBookInfoFromPage(price_link)
+				
 				break
 		except:
 			print "."
 	return
 
 
+def printBook(book):
+	print book.title +  "    " + book.ISBN + "     " + book.edition + "     " + book.course + "      " + book.usedPrice + "     " + book.newPrice	
+
 def searchWithTitles(title_array):
-#	for title in title_array:
-		title = title_array[0]
-		print str(title)	
-		url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/ProductSearchCommand?storeId=22566&catalogId=10001&langId=-1&extSearchEnabled=G+&displayImage=Y+&search=" + str(title)
+	#for title in title_array:
+		title = title_array[4]
+		time.sleep(20)
+		title_url = str(title).replace("&amp;","%26")	
+		title_url = title_url.replace(" ","+")
+		title_url = title_url.replace(":","%3A")
+		title_url = title_url.replace("/","%2F")
+		print title_url
+		url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/ProductSearchCommand?storeId=22566&catalogId=10001&langId=-1&extSearchEnabled=G+&displayImage=Y+&search=" + title_url
+		print url
 		req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
 		con = urllib2.urlopen( req )
 		print "Opening Search Page"
@@ -150,8 +189,10 @@ def searchWithTitles(title_array):
 
 		soup = BeautifulSoup(stringURL)
 		print "Search soup made"
+#		print soup
 		for td in soup.findAll("td"):
 			try:
+				print "In soup"
 				if str(title) in td.text:
 					print "Title found" 
 					print str(title)
@@ -160,7 +201,9 @@ def searchWithTitles(title_array):
 							print "link found"
 							link = str(link.get('href')).replace("&amp;","&")
 							print link
-							getPriceLinkFromLink(link)	
+							book = getPriceLinkFromLink(link)	
+							book.title = title
+							printBook(book)
 			except:
 				print "title not found"
 		
