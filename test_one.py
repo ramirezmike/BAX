@@ -43,6 +43,21 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 
 	print "total books equals:" + str(total_books)
 	return title_array
+def getUsedPriceFromSoup(soup):
+	for tr in soup.findAll("tr"):
+		if "Used" in tr.text:
+			for td in tr.findAll("td"):
+				if "$" in td.text:
+					usedPrice = str(td.text)
+					return usedPrice
+
+def getNewPriceFromSoup(soup):
+	for tr in soup.findAll("tr"):
+		if "New" in tr.text:
+			for td in tr.findAll("td"):
+				if "$" in td.text:
+					newPrice = str(td.text)
+	return newPrice
 
 def getPriceFromPage(link):
 	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/" + link
@@ -55,14 +70,11 @@ def getPriceFromPage(link):
 	soup = BeautifulSoup(stringURL)
 	print "Price Page Soup Made"
 
-	
-	for td in soup.findAll("td"):
-		try:
-			if "pTop6" in td.get('class'):
-				print "Found Prices"
-				print td.text
-		except:
-			print "Price Not Found"
+	usedPrice = getUsedPriceFromSoup(soup)	
+	newPrice = getNewPriceFromSoup(soup)
+
+	print "Used: " + usedPrice
+	print "New: " + newPrice
 	return
 
 def getPriceLinkFromLink(link):
