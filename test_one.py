@@ -46,9 +46,32 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 
 
 def searchWithTitles(title_array):
-	for title in title_array:
+#	for title in title_array:
+		title = title_array[0]
 		print str(title)	
-	return
+		url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/ProductSearchCommand?storeId=22566&catalogId=10001&langId=-1&extSearchEnabled=G+&displayImage=Y+&search=" + str(title)
+		req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
+		con = urllib2.urlopen( req )
+		print "Opening Search Page"
+		stringURL = con.read()
+		con.close()
+
+		soup = BeautifulSoup(stringURL)
+		print "Search soup made"
+		for td in soup.findAll("td"):
+			try:
+				if str(title) in td.text:
+					print "Title found" 
+					print str(title)
+					for link in td.findAll("a"):
+						if "TextbookDetailView" in link.get('href'):
+							print "link found"
+							print str(link.get('href')).replace("&amp;","&")
+			except:
+				print "title not found"
+		
+#	return
+		return
 
 
 
