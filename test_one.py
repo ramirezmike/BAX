@@ -1,4 +1,5 @@
 import urllib2
+import re
 from BeautifulSoup import BeautifulSoup
 
 SCHOOL = "santafe"
@@ -43,6 +44,35 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 
 	print "total books equals:" + str(total_books)
 	return title_array
+
+def getEditionFromSoup(soup):
+	try:
+		for div in soup.findAll("div"):
+			if "Edition" in div.text:
+				regex = re.compile("Edition.+Publisher")
+				match = regex.search(div.text)
+				match = match.group()
+				match = str(match).replace("Edition","")
+				match = str(match).replace("Publisher","")
+				edition = str(match)
+				return edition 
+	except:
+		print "Edition ERROR"
+		return
+
+def getISBNFromSoup(soup):
+	try:
+		for div in soup.findAll("div"):
+			if "ISBN" in div.text:
+				regex = re.compile("ISBN...[\d]+") 
+				match = regex.findall(div.text)
+				match = re.sub("\D", "", str(match))
+				ISBN = str(match)	
+				return ISBN
+	except:
+		print "ISBN ERROR"
+	return
+
 def getUsedPriceFromSoup(soup):
 	for tr in soup.findAll("tr"):
 		if "Used" in tr.text:
@@ -59,7 +89,7 @@ def getNewPriceFromSoup(soup):
 					newPrice = str(td.text)
 	return newPrice
 
-def getPriceFromPage(link):
+def getBookInfoFromPage(link):
 	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/" + link
 	request_url = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
 	connection = urllib2.urlopen( request_url )
@@ -72,9 +102,12 @@ def getPriceFromPage(link):
 
 	usedPrice = getUsedPriceFromSoup(soup)	
 	newPrice = getNewPriceFromSoup(soup)
-
+	ISBN = getISBNFromSoup(soup)
+	edition = getEditionFromSoup(soup)
 	print "Used: " + usedPrice
 	print "New: " + newPrice
+	print "ISBN: " + ISBN
+	print "Edition: " + edition
 	return
 
 def getPriceLinkFromLink(link):
@@ -97,7 +130,7 @@ def getPriceLinkFromLink(link):
 				price_link = price_link.replace("refreshTBDisplay('","")
 				price_link = price_link.replace("');","")
 				print price_link
-				getPriceFromPage(price_link)
+				getBookInfoFromPage(price_link)
 				break
 		except:
 			print "."
