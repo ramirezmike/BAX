@@ -64,7 +64,8 @@ def getCourseFromSoup(soup):
 		
 	except:
 		print "Course Error"
-		return "nil"
+		emptyString = "NONE"
+		return emptyString 
 
 def getEditionFromSoup(soup):
 	try:
@@ -79,7 +80,8 @@ def getEditionFromSoup(soup):
 				return edition 
 	except:
 		print "Edition ERROR"
-		return "nil"
+		emptyString = "No Edition"
+		return str(emptyString)
 
 def getISBNFromSoup(soup):
 	try:
@@ -92,7 +94,8 @@ def getISBNFromSoup(soup):
 				return ISBN
 	except:
 		print "ISBN ERROR"
-		return "nil"
+		emptyString = "NONE"
+		return emptyString 
 
 def getUsedPriceFromSoup(soup):
 	try:
@@ -104,7 +107,8 @@ def getUsedPriceFromSoup(soup):
 						return usedPrice
 	except:
 		print "Used Price ERROR"
-		return "nil"
+		emptyString = "NONE"
+		return emptyString 
 
 def getNewPriceFromSoup(soup):
 	try:
@@ -116,7 +120,8 @@ def getNewPriceFromSoup(soup):
 						return newPrice
 	except:
 		print "New Price ERROR"
-		return "nil"
+		emptyString = "NONE"
+		return emptyString 
 
 def getBookInfoFromPage(link):
 	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/" + link
@@ -141,7 +146,7 @@ def getBookInfoFromPage(link):
 	book.usedPrice = usedPrice
 	book.newPrice = newPrice
 	book.ISBN = ISBN
-	book.edition = edition
+	book.edition = str(edition)
 	book.course = course
 	
 	print "Book Info Successfully Stored"
@@ -178,8 +183,8 @@ def printBook(book,number):
 	try:
 		print "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 		print str(number).rjust(3," "),
-		print "Title: " + book.title.ljust(50," "), 
-		print "  ISBN: ".rjust(10," ") + book.ISBN.ljust(15," ") + "  Edition: " + book.edition.ljust(8," ") + "  Course: " + book.course.ljust(30," ") + "  Used: " + book.usedPrice.ljust(8," ") + "  New: " + book.newPrice.ljust(8," ")	
+		print book.title.ljust(50," "), 
+		print book.ISBN.ljust(15," ") + book.edition.ljust(8," ") + book.course.ljust(30," ") + book.usedPrice.ljust(8," ") + book.newPrice.ljust(8," ")	
 	except:
 		print "Error on " + book.title
 		print book.ISBN
@@ -188,8 +193,8 @@ def printBook(book,number):
 		print book.usedPrice
 		print book.newPrice
 def searchWithTitles(title_array,bookarray,extrabooksarray):
-	for title in title_array:
-#		title = title_array[45]
+#	for title in title_array:
+		title = title_array[0]
 		title_url = str(title).replace("&amp;","%26")	
 		title_url = title_url.replace(" ","+")
 		title_url = title_url.replace(":","%3A")
@@ -234,8 +239,8 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 			except:
 				print "Title Not Found in 'td' SKIPPING"
 		
-	return bookarray
-#		return bookarray
+#	return bookarray
+		return bookarray
 
 
 
@@ -245,6 +250,15 @@ bookNumber = 0
 extraBookNumber = 0
 print "\n\n"
 print "\n\n"
+
+
+print "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+print "#".rjust(3," ") + "Title".rjust(6," ") + "ISBN".rjust(50," ") + "Edn.".rjust(15," ") + "Course".rjust(10," ") + "Used".rjust(28," ") + "New".rjust(7," ")
+#		print str(number).rjust(3," "),
+#		print "Title: " + book.title.ljust(50," "), 
+#		print "  ISBN: ".rjust(10," ") + book.ISBN.ljust(15," ") + "  Edition: " + book.edition.ljust(8," ") + "  Course: " + book.course.ljust(30," ") + "  Used: " + book.usedPrice.ljust(8," ") + "  New: " + book.newPrice.ljust(8," ")	
+
+
 for book in Book_Array:
 	bookNumber+=1
 	printBook(book,bookNumber)
