@@ -193,8 +193,8 @@ def printBook(book,number):
 		print book.usedPrice
 		print book.newPrice
 def searchWithTitles(title_array,bookarray,extrabooksarray):
-#	for title in title_array:
-		title = title_array[0]
+	for title in title_array:
+#		title = title_array[0]
 		title_url = str(title).replace("&amp;","%26")	
 		title_url = title_url.replace(" ","+")
 		title_url = title_url.replace(":","%3A")
@@ -239,8 +239,8 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 			except:
 				print "Title Not Found in 'td' SKIPPING"
 		
-#	return bookarray
-		return bookarray
+	return bookarray
+#		return bookarray
 
 
 
@@ -254,10 +254,6 @@ print "\n\n"
 
 print "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 print "#".rjust(3," ") + "Title".rjust(6," ") + "ISBN".rjust(50," ") + "Edn.".rjust(15," ") + "Course".rjust(10," ") + "Used".rjust(28," ") + "New".rjust(7," ")
-#		print str(number).rjust(3," "),
-#		print "Title: " + book.title.ljust(50," "), 
-#		print "  ISBN: ".rjust(10," ") + book.ISBN.ljust(15," ") + "  Edition: " + book.edition.ljust(8," ") + "  Course: " + book.course.ljust(30," ") + "  Used: " + book.usedPrice.ljust(8," ") + "  New: " + book.newPrice.ljust(8," ")	
-
 
 for book in Book_Array:
 	bookNumber+=1
@@ -266,6 +262,7 @@ print "-------------------------------------------------------------------------
 print "Number of Books: " + str(len(Book_Array))
 print "\n\n"
 print "---------------------------------------------------------------------------------EXTRA BOOKS---------------------------------------------------------------------"
+print "#".rjust(3," ") + "Title".rjust(6," ") + "ISBN".rjust(50," ") + "Edn.".rjust(15," ") + "Course".rjust(10," ") + "Used".rjust(28," ") + "New".rjust(7," ")
 for book in Extra_Books_Array:
 	extraBookNumber+=1
 	printBook(book,extraBookNumber)	
