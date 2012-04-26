@@ -11,6 +11,28 @@ Extra_Books_Array = []
 class BookInfo:
 	pass
 
+
+def ifBookIsOnBuyBack(book):
+	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=" + str(book.ISBN) + "&author=&title=&x=44&y=20"
+	request = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
+	print "Pause to Maintain Connection..."
+	time.sleep(3)
+	connection = urllib2.urlopen( request )
+	stringURL = connection.read()
+	connection.close()	
+
+	soup = BeautifulSoup(stringURL)
+
+	for div in soup.findAll("div"):
+		if book.title in div.text:
+			print "Match Found"
+			return True
+		else:
+			print "."
+	return False
+
+
+
 def getBookTitles(page_results_increment_by_ten,SCHOOL):
 	total_books = 0
 	title_array = []
@@ -194,8 +216,8 @@ def printBook(book,number):
 		print book.newPrice
 
 def searchWithTitles(title_array,bookarray,extrabooksarray):
-	for title in title_array:
-#		title = title_array[0]
+	#for title in title_array:
+		title = title_array[21]
 		title_url = str(title).replace("&amp;","%26")	
 		title_url = title_url.replace(" ","+")
 		title_url = title_url.replace(":","%3A")
@@ -232,16 +254,21 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 							book = getBookInfoFromPage(priceLink) 
 							book.title = str(titleOfBookInLoop).replace("&amp;","&")
 							if (title == titleOfBookInLoop):
-								print "Book Added to Book Array"
-								bookarray.append(book)
+								if (ifBookIsOnBuyBack(book)):
+									print "Book Added to Book Array"
+									bookarray.append(book)
+								
+								else:
+									print "Book Added to Extra Book Array"
+									extrabooksarray.append(book)
 							else:
 								print "Book Added to Extra Book Array"
 								extrabooksarray.append(book)
 			except:
 				print "Title Not Found in 'td' SKIPPING"
 		
-	return bookarray
-#		return bookarray
+#	return bookarray
+		return bookarray
 
 
 
