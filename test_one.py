@@ -19,6 +19,8 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 			url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 			req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
+			print "Pause to Maintain Connection... Total Book Titles Collected: " + str(total_books)
+			time.sleep(3)
 			con = urllib2.urlopen( req )
 			print "URL Open"
 			stringURL = con.read()
@@ -119,6 +121,8 @@ def getNewPriceFromSoup(soup):
 def getBookInfoFromPage(link):
 	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/" + link
 	request_url = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
+	print "Pause to Maintain Connection"
+	time.sleep(3)
 	connection = urllib2.urlopen( request_url )
 	print "Opening Price Page"
 	stringURL = connection.read()
@@ -146,6 +150,8 @@ def getBookInfoFromPage(link):
 def getPriceLinkFromLink(link):
 	url = "http://santafe.bncollege.com" + link
 	request_url = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
+	print "Pause to Maintain Connection"
+	time.sleep(3)
 	connection = urllib2.urlopen( request_url )
 	print "Opening Book Page"	
 	stringURL = connection.read()
@@ -169,17 +175,21 @@ def getPriceLinkFromLink(link):
 
 
 def printBook(book,number):
-
-	print "-----------------------------------------------------------------------------------------------------------------------------------------------------------------"
-	print str(number).rjust(3," "),
-	print "Title: " + book.title.ljust(50," "), 
-	print "  ISBN: ".rjust(10," ") + book.ISBN.ljust(15," ") + "  Edition: " + book.edition.ljust(8," ") + "  Course: " + book.course.ljust(30," ") + "  Used: " + book.usedPrice.ljust(8," ") + "  New: " + book.newPrice.ljust(8," ")	
-
+	try:
+		print "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+		print str(number).rjust(3," "),
+		print "Title: " + book.title.ljust(50," "), 
+		print "  ISBN: ".rjust(10," ") + book.ISBN.ljust(15," ") + "  Edition: " + book.edition.ljust(8," ") + "  Course: " + book.course.ljust(30," ") + "  Used: " + book.usedPrice.ljust(8," ") + "  New: " + book.newPrice.ljust(8," ")	
+	except:
+		print "Error on " + book.title
+		print book.ISBN
+		print book.edition
+		print book.course
+		print book.usedPrice
+		print book.newPrice
 def searchWithTitles(title_array,bookarray,extrabooksarray):
-#	for title in title_array:
-		title = title_array[45]
-		print "Pausing for 10 seconds to avoid connection refusal.."
-		time.sleep(10)
+	for title in title_array:
+#		title = title_array[45]
 		title_url = str(title).replace("&amp;","%26")	
 		title_url = title_url.replace(" ","+")
 		title_url = title_url.replace(":","%3A")
@@ -224,8 +234,8 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 			except:
 				print "Title Not Found in 'td' SKIPPING"
 		
-#	return bookarray
-		return bookarray
+	return bookarray
+#		return bookarray
 
 
 
@@ -233,14 +243,18 @@ titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL)
 Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array)
 bookNumber = 0
 extraBookNumber = 0
+print "\n\n"
+print "\n\n"
 for book in Book_Array:
 	bookNumber+=1
 	printBook(book,bookNumber)
+print "-----------------------------------------------------------------------------------------------------------------------------------------------------------------"
 print "Number of Books: " + str(len(Book_Array))
 print "\n\n"
-print "----------------------------------------------EXTRA BOOKS--------------------------------------------------------------------------------"
+print "---------------------------------------------------------------------------------EXTRA BOOKS---------------------------------------------------------------------"
 for book in Extra_Books_Array:
 	extraBookNumber+=1
 	printBook(book,extraBookNumber)	
+print "-----------------------------------------------------------------------------------------------------------------------------------------------------------------"
 print "Number of Books: " + str(len(Extra_Books_Array))
-print "----------------------------------------------this is the end--------------------------------------------------------------------------------"
+print "----------------------------------------------this is the end----------------------------------------------------------------------------------------------------"
