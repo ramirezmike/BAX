@@ -14,8 +14,8 @@ class BookInfo:
 def getBookTitles(page_results_increment_by_ten,SCHOOL):
 	total_books = 0
 	title_array = []
-	#while (True):
-	while (page_results_increment_by_ten < 50):
+	while (True):
+#	while (page_results_increment_by_ten < 50):
 			url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 			req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
@@ -65,7 +65,7 @@ def getCourseFromSoup(soup):
 	except:
 		print "Course Error"
 		emptyString = "NONE"
-		return emptyString 
+		return str(emptyString) 
 
 def getEditionFromSoup(soup):
 	try:
@@ -95,7 +95,7 @@ def getISBNFromSoup(soup):
 	except:
 		print "ISBN ERROR"
 		emptyString = "NONE"
-		return emptyString 
+		return str(emptyString) 
 
 def getUsedPriceFromSoup(soup):
 	try:
@@ -108,7 +108,7 @@ def getUsedPriceFromSoup(soup):
 	except:
 		print "Used Price ERROR"
 		emptyString = "NONE"
-		return emptyString 
+		return str(emptyString)
 
 def getNewPriceFromSoup(soup):
 	try:
@@ -121,7 +121,7 @@ def getNewPriceFromSoup(soup):
 	except:
 		print "New Price ERROR"
 		emptyString = "NONE"
-		return emptyString 
+		return str(emptyString)
 
 def getBookInfoFromPage(link):
 	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/" + link
@@ -192,6 +192,7 @@ def printBook(book,number):
 		print book.course
 		print book.usedPrice
 		print book.newPrice
+
 def searchWithTitles(title_array,bookarray,extrabooksarray):
 	for title in title_array:
 #		title = title_array[0]
@@ -229,7 +230,7 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 							print link
 							priceLink = getPriceLinkFromLink(link)	
 							book = getBookInfoFromPage(priceLink) 
-							book.title = titleOfBookInLoop
+							book.title = str(titleOfBookInLoop).replace("&amp;","&")
 							if (title == titleOfBookInLoop):
 								print "Book Added to Book Array"
 								bookarray.append(book)
