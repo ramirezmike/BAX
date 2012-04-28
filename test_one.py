@@ -1,3 +1,4 @@
+from decimal import *
 import urllib2
 import re
 import time
@@ -11,6 +12,15 @@ Extra_Books_Array = []
 class BookInfo:
 	pass
 
+def addToExcelText(book):
+	text = "\n" + book.title + "\t\t" + book.ISBN + "\t" + book.course + "\t" + book.edition + "\t" + book.usedPrice + "\t" + book.newPrice + "\t" + book.amzNew + "\t" + book.amzUsd
+	return text
+
+def exportToExcel(school,text):
+	fileTitle = school + ".xls"
+	fileContent = open(fileTitle,"w")
+	fileContent.write(text)
+	fileContent.close()
 
 def ifBookIsOnBuyBack(book):
 	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=" + str(book.ISBN) + "&author=&title=&x=44&y=20"
@@ -31,13 +41,71 @@ def ifBookIsOnBuyBack(book):
 			print "."
 	return False
 
+def getAmazonLink(ISBN):
+	print "Connecting to Amazon.."
+        print ISBN
+	url_text = "http://www.amazon.com/gp/search/ref=sr_adv_b/?search-alias=stripbooks&unfiltered=1&field-keywords=&field-author=&field-title=&field-isbn=" + ISBN + "&field-publisher=&node=&field-p_n_condition-type=&field-feature_browse-bin=&field-subject=&field-language=&field-dateop=&field-datemod=&field-dateyear=&sort=relevanceexprank&Adv-Srch-Books-Submit.x=37&Adv-Srch-Books-Submit.y=14"	
+	request = urllib2.Request(url_text, headers={'User-Agent' : "Magic Browser"})
+	connection = urllib2.urlopen( request )
+	stringURL = connection.read()
+	connection.close()
 
+	soup = BeautifulSoup(stringURL)
+	for link in soup.findAll("a"):
+		if "http://www.amazon.com/" in link.get("href"):
+			print "Amazon Book Link: " + link.get("href")
+			#return link.get("href")
+			return stringURL
+		
+	print "Book Not Found on Amazon Website.."
+	return
+
+
+def getAmazonPrices(stringURL):
+	#request = urllib2.Request(link, headers={'User-Agent' : "Magic Browser"})
+	#connection = urllib2.urlopen( req )
+	#stringURL = connection.read()
+	#connection.close()
+
+	soup = BeautifulSoup(stringURL)
+	
+	print "Price Soup Made"
+	prices = []
+
+	for link in soup.findAll("a"):
+		try:
+			if "$" in link.text:
+				prices.append(link.text)
+		except:
+			print "No Money Found"
+	print prices
+	if (len(prices) == 4):
+		prices.remove(prices[3])
+		prices.remove(prices[1])
+		usedPrice = str(prices[1]).replace("$","")
+		newPrice = str(prices[0]).replace("$","")
+	elif (len(prices) > 1):
+		usedPrice = str(prices[0]).replace("$","")
+		newPrice = 0
+		for price in prices:
+			price = str(price).replace("$","")
+			if (Decimal(price) > Decimal(newPrice)):
+				print str(price) + " is > " + str(newPrice)
+				newPrice = price
+			if (Decimal(price) < Decimal(usedPrice)):
+				print price + " is <= " + str(newPrice)
+				usedPrice = price
+	
+	foundPricesArray = []
+	foundPricesArray.append(newPrice)
+	foundPricesArray.append(usedPrice)
+	return foundPricesArray 
 
 def getBookTitles(page_results_increment_by_ten,SCHOOL):
 	total_books = 0
 	title_array = []
-	while (True):
-#	while (page_results_increment_by_ten < 50):
+	#while (True):
+	while (page_results_increment_by_ten < 10):
 			url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 			req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
@@ -206,7 +274,8 @@ def printBook(book,number):
 		print "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 		print str(number).rjust(3," "),
 		print book.title.ljust(50," "), 
-		print book.ISBN.ljust(15," ") + book.edition.ljust(8," ") + book.course.ljust(30," ") + book.usedPrice.ljust(8," ") + book.newPrice.ljust(8," ")	
+		print book.ISBN.ljust(15," ") + book.edition.ljust(8," ") + book.course.ljust(30," ") + "|".ljust(5," ") + book.usedPrice.ljust(8," ") + book.newPrice.ljust(10," ") + "$" + book.amzNew.ljust(8," ") + "$" + book.amzUsd.ljust(6," ")	
+
 	except:
 		print "Error on " + book.title
 		print book.ISBN
@@ -214,10 +283,13 @@ def printBook(book,number):
 		print book.course
 		print book.usedPrice
 		print book.newPrice
+		print book.amzNew
+		print book.amzUsd
+
 
 def searchWithTitles(title_array,bookarray,extrabooksarray):
-	#for title in title_array:
-		title = title_array[21]
+	for title in title_array:
+	#	title = title_array[0]
 		title_url = str(title).replace("&amp;","%26")	
 		title_url = title_url.replace(" ","+")
 		title_url = title_url.replace(":","%3A")
@@ -267,13 +339,36 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 			except:
 				print "Title Not Found in 'td' SKIPPING"
 		
-#	return bookarray
-		return bookarray
+	return bookarray
+		#return bookarray
 
 
 
 titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL)
 Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array)
+
+for book in Book_Array:
+	amazon_url = getAmazonLink(book.ISBN)
+	if (amazon_url):
+		priceArray = getAmazonPrices(amazon_url)
+		book.amzNew = priceArray[0]
+		book.amzUsd = priceArray[1]
+	else:
+		book.amzNew = ""
+		book.amzUsd = ""
+
+for book in Extra_Books_Array:
+	amazon_url = getAmazonLink(book.ISBN)
+	if (amazon_url):
+		priceArray = getAmazonPrices(amazon_url)
+		book.amzNew = priceArray[0]
+		book.amzUsd = priceArray[1]
+	else:
+		book.amzNew = ""
+		book.amzUsd = ""
+	
+
+
 bookNumber = 0
 extraBookNumber = 0
 print "\n\n"
@@ -281,19 +376,29 @@ print "\n\n"
 
 
 print "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
-print "#".rjust(3," ") + "Title".rjust(6," ") + "ISBN".rjust(50," ") + "Edn.".rjust(15," ") + "Course".rjust(10," ") + "Used".rjust(28," ") + "New".rjust(7," ")
+print "#".rjust(3," ") + "Title".rjust(6," ") + "ISBN".rjust(50," ") + "Edn.".rjust(15," ") + "Course".rjust(10," ") + "Used".rjust(33," ") + "New".rjust(7," ") + "AmzN".rjust(11," ") + "AmzU".rjust(9," ")
 
 for book in Book_Array:
+	bookNumber+=1
+	printBook(book,bookNumber)
+for book in Extra_Books_Array:
 	bookNumber+=1
 	printBook(book,bookNumber)
 print "-----------------------------------------------------------------------------------------------------------------------------------------------------------------"
 print "Number of Books: " + str(len(Book_Array))
 print "\n\n"
 print "---------------------------------------------------------------------------------EXTRA BOOKS---------------------------------------------------------------------"
-print "#".rjust(3," ") + "Title".rjust(6," ") + "ISBN".rjust(50," ") + "Edn.".rjust(15," ") + "Course".rjust(10," ") + "Used".rjust(28," ") + "New".rjust(7," ")
+print "#".rjust(3," ") + "Title".rjust(6," ") + "ISBN".rjust(50," ") + "Edn.".rjust(15," ") + "Course".rjust(10," ") + "Used".rjust(33," ") + "New".rjust(7," ") + "AmzN".rjust(11," ") + "AmzU".rjust(7," ")
 for book in Extra_Books_Array:
 	extraBookNumber+=1
 	printBook(book,extraBookNumber)	
 print "-----------------------------------------------------------------------------------------------------------------------------------------------------------------"
 print "Number of Books: " + str(len(Extra_Books_Array))
 print "----------------------------------------------this is the end----------------------------------------------------------------------------------------------------"
+
+excelText = ""
+for book in Book_Array:
+	excelText = excelText + addToExcelText(book)
+	print "Text added to Excel String"
+exportToExcel(SCHOOL,excelText)
+print "Excel sheet written"
