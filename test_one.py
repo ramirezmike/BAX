@@ -3,6 +3,7 @@ import urllib2
 import re
 import time
 from BeautifulSoup import BeautifulSoup
+import socket
 
 SCHOOL = "santafe"
 page_results_increment_by_ten = 0
@@ -12,9 +13,38 @@ Extra_Books_Array = []
 class BookInfo:
 	pass
 
+
+def getSoup(URL):
+	while (True):
+		try:
+			req = urllib2.Request(URL, headers={'User-Agent' : "Magic Browser"})
+			print "Pause to Maintain Connection..." 
+			time.sleep(3)
+			con = urllib2.urlopen(req, None, 5.0 )
+			print "URL Open: " + URL
+			stringURL = con.read()
+			con.close()
+			break
+		except urllib2.URLError, e:
+			print "Connection ERROR. Retrying.."
+		except socket.timeout, e:
+			print "Socket Timeout. Retrying.."
+
+
+	soup = BeautifulSoup(stringURL)
+	print "Soup Made"
+	return soup
+
 def addToExcelText(book):
 	text = "\n" + book.title + "\t\t" + book.ISBN + "\t" + book.course + "\t" + book.edition + "\t" + book.usedPrice + "\t" + book.newPrice + "\t" + book.amzNew + "\t" + book.amzUsd
 	return text
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 def exportToExcel(school,text):
 	fileTitle = school + ".xls"
@@ -24,14 +54,7 @@ def exportToExcel(school,text):
 
 def ifBookIsOnBuyBack(book):
 	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=" + str(book.ISBN) + "&author=&title=&x=44&y=20"
-	request = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
-	print "Pause to Maintain Connection..."
-	time.sleep(3)
-	connection = urllib2.urlopen( request )
-	stringURL = connection.read()
-	connection.close()	
-
-	soup = BeautifulSoup(stringURL)
+	soup = getSoup(url)
 
 	for div in soup.findAll("div"):
 		if book.title in div.text:
@@ -45,29 +68,26 @@ def getAmazonLink(ISBN):
 	print "Connecting to Amazon.."
         print ISBN
 	url_text = "http://www.amazon.com/gp/search/ref=sr_adv_b/?search-alias=stripbooks&unfiltered=1&field-keywords=&field-author=&field-title=&field-isbn=" + ISBN + "&field-publisher=&node=&field-p_n_condition-type=&field-feature_browse-bin=&field-subject=&field-language=&field-dateop=&field-datemod=&field-dateyear=&sort=relevanceexprank&Adv-Srch-Books-Submit.x=37&Adv-Srch-Books-Submit.y=14"	
-	request = urllib2.Request(url_text, headers={'User-Agent' : "Magic Browser"})
-	connection = urllib2.urlopen( request )
-	stringURL = connection.read()
-	connection.close()
-
-	soup = BeautifulSoup(stringURL)
+	soup = getSoup(url_text)
+	
 	for link in soup.findAll("a"):
 		if "http://www.amazon.com/" in link.get("href"):
 			print "Amazon Book Link: " + link.get("href")
 			#return link.get("href")
-			return stringURL
+			#return stringURL
+			return soup
 		
 	print "Book Not Found on Amazon Website.."
 	return
 
 
-def getAmazonPrices(stringURL):
+def getAmazonPrices(soup):
 	#request = urllib2.Request(link, headers={'User-Agent' : "Magic Browser"})
 	#connection = urllib2.urlopen( req )
 	#stringURL = connection.read()
 	#connection.close()
 
-	soup = BeautifulSoup(stringURL)
+	#soup = BeautifulSoup(stringURL)
 	
 	print "Price Soup Made"
 	prices = []
@@ -75,10 +95,16 @@ def getAmazonPrices(stringURL):
 	for link in soup.findAll("a"):
 		try:
 			if "$" in link.text:
-				prices.append(link.text)
+				price_test = link.text.replace("$","")
+				if (is_number(price_test)):
+					prices.append(link.text)
 		except:
 			print "No Money Found"
 	print prices
+		
+	newPrice = "None"
+	usedPrice = "None"
+
 	if (len(prices) == 4):
 		prices.remove(prices[3])
 		prices.remove(prices[1])
@@ -104,24 +130,21 @@ def getAmazonPrices(stringURL):
 def getBookTitles(page_results_increment_by_ten,SCHOOL):
 	total_books = 0
 	title_array = []
-	#while (True):
-	while (page_results_increment_by_ten < 10):
+	temp_array = []
+	while (True):
+	#while (page_results_increment_by_ten < 30):
 			url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
-			req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
-			print "Pause to Maintain Connection... Total Book Titles Collected: " + str(total_books)
-			time.sleep(3)
-			con = urllib2.urlopen( req )
-			print "URL Open"
-			stringURL = con.read()
-			con.close()
+			print "Total Book Titles Collected: " + str(total_books)
 
-			soup = BeautifulSoup(stringURL)
-			print "Soup Made"
+			soup = getSoup(url)
 
 			#print soup
 
 			count = 0
+			previous_array = temp_array 
+			temp_array = []
+			
 			for dd in soup.findAll("td"):
 				for td in dd.findAll("td"):
 					try:
@@ -129,17 +152,23 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 							print "Title Found: ",
 							temp_string = td.text.replace("TITLE:","")
 							print temp_string 
-							title_array.append(temp_string)
+							temp_array.append(temp_string)
 							count+=1
 							total_books+=1
 					except:
 						print "No Title in 'td'"
 
 			page_results_increment_by_ten += 10
+			
+			if (temp_array == previous_array):
+				break
+			for string in temp_array:
+				title_array.append(string)	
 			if (count < 10):
 				break
 
 	print "Total Books Found: " + str(total_books)
+	print title_array
 	return title_array
 
 def getCourseFromSoup(soup):
@@ -215,15 +244,7 @@ def getNewPriceFromSoup(soup):
 
 def getBookInfoFromPage(link):
 	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/" + link
-	request_url = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
-	print "Pause to Maintain Connection"
-	time.sleep(3)
-	connection = urllib2.urlopen( request_url )
-	print "Opening Price Page"
-	stringURL = connection.read()
-	connection.close()
-
-	soup = BeautifulSoup(stringURL)
+	soup = getSoup(url)	
 	print "Price Page Soup Made"
 
 	usedPrice = getUsedPriceFromSoup(soup)	
@@ -244,15 +265,7 @@ def getBookInfoFromPage(link):
 
 def getPriceLinkFromLink(link):
 	url = "http://santafe.bncollege.com" + link
-	request_url = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
-	print "Pause to Maintain Connection"
-	time.sleep(3)
-	connection = urllib2.urlopen( request_url )
-	print "Opening Book Page"	
-	stringURL = connection.read()
-	connection.close()
-
-	soup = BeautifulSoup(stringURL)
+	soup = getSoup(url)
 	print "Book Page Soup Made"
 
 	for img in soup.findAll("img"):
@@ -288,22 +301,18 @@ def printBook(book,number):
 
 
 def searchWithTitles(title_array,bookarray,extrabooksarray):
+	bookCount = 0
 	for title in title_array:
 	#	title = title_array[0]
+		bookCount += 1
+		print "Book number " + str(bookCount) + " of " + str(len(title_array))
 		title_url = str(title).replace("&amp;","%26")	
 		title_url = title_url.replace(" ","+")
 		title_url = title_url.replace(":","%3A")
 		title_url = title_url.replace("/","%2F")
 		url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/ProductSearchCommand?storeId=22566&catalogId=10001&langId=-1&extSearchEnabled=G+&displayImage=Y+&search=" + title_url
 		print "Generated Search URL: " + url
-		req = urllib2.Request(url, headers={'User-Agent' : "Magic Browser"})
-		print "Connecting.. this can sometimes take a bit"
-		con = urllib2.urlopen( req )
-		print "Opening Search Page"
-		stringURL = con.read()
-		con.close()
-
-		soup = BeautifulSoup(stringURL)
+		soup = getSoup(url)
 		print "Search Soup Made"
 		for td in soup.findAll("td"):
 			try:
@@ -348,9 +357,9 @@ titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL)
 Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array)
 
 for book in Book_Array:
-	amazon_url = getAmazonLink(book.ISBN)
-	if (amazon_url):
-		priceArray = getAmazonPrices(amazon_url)
+	amazonSoup = getAmazonLink(book.ISBN)
+	if (amazonSoup):
+		priceArray = getAmazonPrices(amazonSoup)
 		book.amzNew = priceArray[0]
 		book.amzUsd = priceArray[1]
 	else:
@@ -358,9 +367,9 @@ for book in Book_Array:
 		book.amzUsd = ""
 
 for book in Extra_Books_Array:
-	amazon_url = getAmazonLink(book.ISBN)
-	if (amazon_url):
-		priceArray = getAmazonPrices(amazon_url)
+	extraAmazonSoup = getAmazonLink(book.ISBN)
+	if (extraAmazonSoup):
+		priceArray = getAmazonPrices(extraAmazonSoup)
 		book.amzNew = priceArray[0]
 		book.amzUsd = priceArray[1]
 	else:
