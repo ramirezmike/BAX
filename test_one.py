@@ -359,6 +359,8 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 	#	return bookarray
 
 
+startTime = time.time()
+print "Start Time: " + str(startTime)
 
 titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL)
 Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array)
@@ -422,3 +424,6 @@ for book in Book_Array:
 		continue
 exportToExcel(SCHOOL,excelText)
 print "Excel sheet written"
+
+elapsedTime = time.time() - startTime
+print "Elapsed Time: " + str(elapsedTime)
