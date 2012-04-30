@@ -131,8 +131,8 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 	total_books = 0
 	title_array = []
 	temp_array = []
-	#while (True):
-	while (page_results_increment_by_ten < 10):
+	while (True):
+	#while (page_results_increment_by_ten < 10):
 			url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 			print "Total Book Titles Collected: " + str(total_books)
@@ -307,10 +307,10 @@ def printBook(book,number):
 
 
 def searchWithTitles(title_array,bookarray,extrabooksarray):
-#	bookCount = 0
-		bookCount = 0
-#	for title in title_array:
-		title = title_array[0]
+	bookCount = 0
+#		bookCount = 0
+	for title in title_array:
+#		title = title_array[0]
 		bookCount += 1
 		print "Book number " + str(bookCount) + " of " + str(len(title_array))
 		title_url = str(title).replace("&amp;","%26")	
@@ -355,8 +355,8 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 			except:
 				print "Title Not Found in 'td' SKIPPING"
 		
-	#return bookarray
-		return bookarray
+	return bookarray
+	#	return bookarray
 
 
 
