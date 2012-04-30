@@ -5,7 +5,7 @@ import time
 from BeautifulSoup import BeautifulSoup
 import socket
 
-SCHOOL = "santafe"
+SCHOOL = "FLsouthern"
 page_results_increment_by_ten = 0
 Book_Array = []
 Extra_Books_Array = []
@@ -35,6 +35,19 @@ def getSoup(URL):
 	print "Soup Made"
 	return soup
 
+def getSchoolID(school):
+	url = "http://" + school + ".bncollege.com"
+	soup = getSoup(url)
+	
+	for link in soup.findAll("a"):
+		if "storeId" in link.get("href"):
+			regex = re.compile("storeId=.+&")
+			match = regex.search(link.get("href"))
+			match = re.sub("storeId=","", match.group())
+			schoolId = str(match).replace("&","")
+	return schoolId
+
+
 def addToExcelText(book):
 	text = "\n" + book.title + "\t\t" + book.ISBN + "\t" + book.course + "\t" + book.edition + "\t" + book.usedPrice + "\t" + book.newPrice + "\t" + book.amzNew + "\t" + book.amzUsd
 	return text
@@ -52,8 +65,8 @@ def exportToExcel(school,text):
 	fileContent.write(text)
 	fileContent.close()
 
-def ifBookIsOnBuyBack(book):
-	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=" + str(book.ISBN) + "&author=&title=&x=44&y=20"
+def ifBookIsOnBuyBack(book, school,schoolId):
+	url = "http://" + school + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=" + schoolId + "&catalogId=10001&isbn=" + str(book.ISBN) + "&author=&title=&x=44&y=20"
 	soup = getSoup(url)
 
 	for div in soup.findAll("div"):
@@ -127,13 +140,13 @@ def getAmazonPrices(soup):
 	foundPricesArray.append(usedPrice)
 	return foundPricesArray 
 
-def getBookTitles(page_results_increment_by_ten,SCHOOL):
+def getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId):
 	total_books = 0
 	title_array = []
 	temp_array = []
 	while (True):
 	#while (page_results_increment_by_ten < 10):
-			url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
+			url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=" + schoolId + "&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 			print "Total Book Titles Collected: " + str(total_books)
 
@@ -248,8 +261,8 @@ def getNewPriceFromSoup(soup):
 		emptyString = "NONE"
 		return str(emptyString)
 
-def getBookInfoFromPage(link):
-	url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/" + link
+def getBookInfoFromPage(link,school):
+	url = "http://" + school + ".bncollege.com/webapp/wcs/stores/servlet/" + link
 	soup = getSoup(url)	
 	print "Price Page Soup Made"
 
@@ -269,8 +282,8 @@ def getBookInfoFromPage(link):
 	print "Book Info Successfully Stored"
 	return book
 
-def getPriceLinkFromLink(link):
-	url = "http://santafe.bncollege.com" + link
+def getPriceLinkFromLink(link,school):
+	url = "http://" + school + ".bncollege.com" + link
 	soup = getSoup(url)
 	print "Book Page Soup Made"
 
@@ -306,7 +319,7 @@ def printBook(book,number):
 		print book.amzUsd
 
 
-def searchWithTitles(title_array,bookarray,extrabooksarray):
+def searchWithTitles(title_array,bookarray,extrabooksarray,school,schoolId):
 	bookCount = 0
 #		bookCount = 0
 	for title in title_array:
@@ -317,7 +330,7 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 		title_url = title_url.replace(" ","+")
 		title_url = title_url.replace(":","%3A")
 		title_url = title_url.replace("/","%2F")
-		url = "http://santafe.bncollege.com/webapp/wcs/stores/servlet/ProductSearchCommand?storeId=22566&catalogId=10001&langId=-1&extSearchEnabled=G+&displayImage=Y+&search=" + title_url
+		url = "http://" + school + ".bncollege.com/webapp/wcs/stores/servlet/ProductSearchCommand?storeId=" + str(schoolId) + "&catalogId=10001&langId=-1&extSearchEnabled=G+&displayImage=Y+&search=" + title_url
 		print "Generated Search URL: " + url
 		soup = getSoup(url)
 		print "Search Soup Made"
@@ -338,11 +351,11 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 #							link = link.replace(":","%3A")
 #							link = link.replace("/","%2F")
 							print link
-							priceLink = getPriceLinkFromLink(link)	
-							book = getBookInfoFromPage(priceLink) 
+							priceLink = getPriceLinkFromLink(link,school)	
+							book = getBookInfoFromPage(priceLink,school) 
 							book.title = str(titleOfBookInLoop).replace("&amp;","&")
 							if (title == titleOfBookInLoop):
-								if (ifBookIsOnBuyBack(book)):
+								if (ifBookIsOnBuyBack(book,school,schoolId)):
 									print "Book Added to Book Array"
 									bookarray.append(book)
 								
@@ -362,8 +375,9 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 startTime = time.time()
 print "Start Time: " + str(startTime)
 
-titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL)
-Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array)
+schoolId = getSchoolID(SCHOOL) 
+titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId)
+Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array,SCHOOL,schoolId)
 
 for book in Book_Array:
 	amazonSoup = getAmazonLink(book.ISBN)
