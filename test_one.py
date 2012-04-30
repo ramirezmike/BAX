@@ -131,8 +131,8 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL):
 	total_books = 0
 	title_array = []
 	temp_array = []
-	while (True):
-	#while (page_results_increment_by_ten < 30):
+	#while (True):
+	while (page_results_increment_by_ten < 10):
 			url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=22566&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 			print "Total Book Titles Collected: " + str(total_books)
@@ -223,7 +223,10 @@ def getUsedPriceFromSoup(soup):
 				for td in tr.findAll("td"):
 					if "$" in td.text:
 						usedPrice = str(td.text)
+						print usedPrice
 						return usedPrice
+		emptyString = "NONE"
+		return str(emptyString)
 	except:
 		print "Used Price ERROR"
 		emptyString = "NONE"
@@ -236,7 +239,10 @@ def getNewPriceFromSoup(soup):
 				for td in tr.findAll("td"):
 					if "$" in td.text:
 						newPrice = str(td.text)
+						print newPrice
 						return newPrice
+		emptyString = "NONE"
+		return str(emptyString)
 	except:
 		print "New Price ERROR"
 		emptyString = "NONE"
@@ -301,9 +307,10 @@ def printBook(book,number):
 
 
 def searchWithTitles(title_array,bookarray,extrabooksarray):
-	bookCount = 0
-	for title in title_array:
-	#	title = title_array[0]
+#	bookCount = 0
+		bookCount = 0
+#	for title in title_array:
+		title = title_array[0]
 		bookCount += 1
 		print "Book number " + str(bookCount) + " of " + str(len(title_array))
 		title_url = str(title).replace("&amp;","%26")	
@@ -348,8 +355,8 @@ def searchWithTitles(title_array,bookarray,extrabooksarray):
 			except:
 				print "Title Not Found in 'td' SKIPPING"
 		
-	return bookarray
-		#return bookarray
+	#return bookarray
+		return bookarray
 
 
 
@@ -407,7 +414,11 @@ print "----------------------------------------------this is the end------------
 
 excelText = ""
 for book in Book_Array:
-	excelText = excelText + addToExcelText(book)
-	print "Text added to Excel String"
+	try:
+		excelText = excelText + addToExcelText(book)
+		print "Text added to Excel String"
+	except:
+		print "Excel Text ERRROR"
+		continue
 exportToExcel(SCHOOL,excelText)
 print "Excel sheet written"
