@@ -5,7 +5,7 @@ import time
 from BeautifulSoup import BeautifulSoup
 import socket
 
-SCHOOL = "FLsouthern"
+#SCHOOL = "dunwoody"
 page_results_increment_by_ten = 0
 Book_Array = []
 Extra_Books_Array = []
@@ -37,16 +37,26 @@ def getSoup(URL):
 
 def getSchoolID(school):
 	url = "http://" + school + ".bncollege.com"
-	soup = getSoup(url)
-	
-	for link in soup.findAll("a"):
-		if "storeId" in link.get("href"):
-			regex = re.compile("storeId=.+&")
-			match = regex.search(link.get("href"))
-			match = re.sub("storeId=","", match.group())
-			schoolId = str(match).replace("&","")
-	return schoolId
-
+	while (True):
+		print url
+		soup = getSoup(url)
+		for link in soup.findAll("a"):
+			if "storeId" in link.get("href"):
+				regex = re.compile("storeId=.+&")
+				match = regex.search(link.get("href"))
+				match = re.sub("storeId=","", match.group())
+				schoolId = str(match).replace("&","")
+		try:
+			return schoolId
+		except:
+			print "Redirecting.."
+			regex = re.compile('URL=.+"')
+			match = regex.search(str(soup))
+			match = re.sub('URL="',"",match.group())
+			match = match.replace('"',"")
+			match = match.replace("&amp;","&")
+			print match
+			url = "http://" + school + ".bncollege.com/" + match
 
 def addToExcelText(book):
 	text = "\n" + book.title + "\t\t" + book.ISBN + "\t" + book.course + "\t" + book.edition + "\t" + book.usedPrice + "\t" + book.newPrice + "\t" + book.amzNew + "\t" + book.amzUsd
@@ -371,7 +381,9 @@ def searchWithTitles(title_array,bookarray,extrabooksarray,school,schoolId):
 	return bookarray
 	#	return bookarray
 
-
+SCHOOL = raw_input("School:")
+print SCHOOL
+excelFileName = raw_input("Enter name you wish to use for the exported excel file: ")
 startTime = time.time()
 print "Start Time: " + str(startTime)
 
@@ -436,7 +448,7 @@ for book in Book_Array:
 	except:
 		print "Excel Text ERRROR"
 		continue
-exportToExcel(SCHOOL,excelText)
+exportToExcel(excelFileName,excelText)
 print "Excel sheet written"
 
 elapsedTime = time.time() - startTime
