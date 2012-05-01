@@ -5,10 +5,6 @@ import time
 from BeautifulSoup import BeautifulSoup
 import socket
 
-page_results_increment_by_ten = 0
-Book_Array = []
-Extra_Books_Array = []
-
 # CLASS DECLARATIONS
 class BookInfo:
 	pass
@@ -202,9 +198,13 @@ def searchWithTitles(title_array,bookarray,extrabooksarray,school,schoolId):
 							priceLink = getPriceLinkFromLink(link,school)	
 							book = getBookInfoFromPage(priceLink,school) 
 							book.title = str(titleOfBookInLoop).replace("&amp;","&")
-							if (title == titleOfBookInLoop & ifBookIsOnBuyBack(book,school,schoolId)):
-								print "Book Added to Book Array"
-								bookarray.append(book)
+							if (title == titleOfBookInLoop):
+								if (ifBookIsOnBuyBack(book,school,schoolId)):
+									print "Book Added to Book Array"
+									bookarray.append(book)
+								else:
+									print "Book Added to Extra Book Array"
+									extrabooksarray.append(book)
 							else:
 								print "Book Added to Extra Book Array"
 								extrabooksarray.append(book)
@@ -212,7 +212,7 @@ def searchWithTitles(title_array,bookarray,extrabooksarray,school,schoolId):
 				print "Title Not Found in 'td' SKIPPING"
 		
 	return bookarray
-	#	return bookarray
+#		return bookarray
 
 def ifBookIsOnBuyBack(book, school,schoolId):
 	url = "http://" + school + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=" + schoolId + "&catalogId=10001&isbn=" + str(book.ISBN) + "&author=&title=&x=44&y=20"
@@ -281,14 +281,15 @@ def storeAmazonInfo(array):
 def getAmazonLink(ISBN):
 	print "Connecting to Amazon.."
         print ISBN
-	url_text = "http://www.amazon.com/gp/search/ref=sr_adv_b/?search-alias=stripbooks&unfiltered=1&field-keywords=&field-author=&field-title=&field-isbn=" + ISBN + "&field-publisher=&node=&field-p_n_condition-type=&field-feature_browse-bin=&field-subject=&field-language=&field-dateop=&field-datemod=&field-dateyear=&sort=relevanceexprank&Adv-Srch-Books-Submit.x=37&Adv-Srch-Books-Submit.y=14"	
+	if (ISBN):
+		url_text = "http://www.amazon.com/gp/search/ref=sr_adv_b/?search-alias=stripbooks&unfiltered=1&field-keywords=&field-author=&field-title=&field-isbn=" + ISBN + "&field-publisher=&node=&field-p_n_condition-type=&field-feature_browse-bin=&field-subject=&field-language=&field-dateop=&field-datemod=&field-dateyear=&sort=relevanceexprank&Adv-Srch-Books-Submit.x=37&Adv-Srch-Books-Submit.y=14"	
 
-	soup = getSoup(url_text)
-	
-	for link in soup.findAll("a"):
-		if "http://www.amazon.com/" in link.get("href"):
-			print "Amazon Book Link: " + link.get("href")
-			return soup
+		soup = getSoup(url_text)
+		
+		for link in soup.findAll("a"):
+			if "http://www.amazon.com/" in link.get("href"):
+				print "Amazon Book Link: " + link.get("href")
+				return soup
 		
 	print "Book Not Found on Amazon Website.."
 	return
@@ -415,6 +416,10 @@ def getNewPriceFromSoup(soup):
 
 pause_script = ""
 while (pause_script != "q"):
+	page_results_increment_by_ten = 0
+	Book_Array = []
+	Extra_Books_Array = []
+
 	SCHOOL = raw_input("School:")
 	excelFileName = raw_input("Enter name you wish to use for the exported excel file: ")
 
@@ -425,6 +430,8 @@ while (pause_script != "q"):
 	Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array,SCHOOL,schoolId)
 
 	storeAmazonInfo(Book_Array)
+	for book in Extra_Books_Array:
+		print book.ISBN
 	storeAmazonInfo(Extra_Books_Array)
 
 	displayResults(Book_Array)
@@ -436,4 +443,4 @@ while (pause_script != "q"):
 	elapsedTime = time.time() - startTime
 	print "Elapsed Time: " + str(elapsedTime) + "(s)"
 
-	pause_script = raw_input("Press any key to restart or q to quit")
+	pause_script = raw_input("Enter 'q' to quit, or enter anything else to restart the script: ")
