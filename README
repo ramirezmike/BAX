@@ -1,0 +1,3 @@
+This was a script I made for a friend. It takes prices from bncollege.com's buyback page for the selected college and also scrapes prices from amazon for each book. Then it exports all the data into an excel file.
+
+Current version is working but needs a lot of refactoring to increase readability
