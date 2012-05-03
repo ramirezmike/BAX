@@ -218,6 +218,7 @@ def ifBookIsOnBuyBack(book, school,schoolId):
 	url = "http://" + school + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=" + schoolId + "&catalogId=10001&isbn=" + str(book.ISBN) + "&author=&title=&x=44&y=20"
 	soup = getSoup(url)
 
+	print "Buyback check: " + book.title + ": " + url
 	for div in soup.findAll("div"):
 		if book.title in div.text:
 			print "Match Found"
@@ -229,20 +230,26 @@ def ifBookIsOnBuyBack(book, school,schoolId):
 def getBookInfoFromPage(link,school):
 	url = "http://" + school + ".bncollege.com/webapp/wcs/stores/servlet/" + link
 	soup = getSoup(url)	
+	print "Book info page: " + url
 	print "Price Page Soup Made"
 
-	usedPrice = getUsedPriceFromSoup(soup)	
-	newPrice = getNewPriceFromSoup(soup)
-	ISBN = getISBNFromSoup(soup)
-	edition = getEditionFromSoup(soup)
-	course = getCourseFromSoup(soup)
-
 	book = BookInfo()
-	book.usedPrice = usedPrice
-	book.newPrice = newPrice
-	book.ISBN = ISBN
-	book.edition = str(edition)
-	book.course = course
+	book.usedPrice = "NONE"
+	book.newPrice = "NONE"
+	book.ISBN = "NONE"
+	book.edition = "NONE"
+	book.course = "NONE"
+	for i in range(0,2):
+		if (book.usedPrice == "NONE"):	
+			book.usedPrice = str(getUsedPriceFromSoup(soup))
+		if (book.newPrice == "NONE"):	
+			book.newPrice = str(getNewPriceFromSoup(soup))
+		if (book.ISBN == "NONE"):	
+			book.ISBN = str(getISBNFromSoup(soup))
+		if (book.edition == "NONE"):	
+			book.edition = str(getEditionFromSoup(soup))
+		if (book.course == "NONE"):	
+			book.course = str(getCourseFromSoup(soup))
 	
 	print "Book Info Successfully Stored"
 	return book
@@ -365,7 +372,7 @@ def getEditionFromSoup(soup):
 				return edition 
 	except:
 		print "Edition ERROR"
-		emptyString = "No Edition"
+		emptyString = "NONE"
 		return str(emptyString)
 
 def getISBNFromSoup(soup):
