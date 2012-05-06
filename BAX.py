@@ -38,6 +38,12 @@ def is_number(testNumber):
     except ValueError:
         return False
 
+def getRetryTitleArray(retryarray):
+	titleArray = []
+	for book in retryarray:
+		titleArray.append(str(book.title))
+	return titleArray
+
 # PRINTING DATA
 def printBook(book,number):
 	print "-" * 181
@@ -163,11 +169,11 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId):
 	print "Total Books Found: " + str(total_books)
 	return title_array
 
-def searchWithTitles(title_array,bookarray,extrabooksarray,school,schoolId):
+def searchWithTitles(title_array,bookarray,extrabooksarray,retryarray,school,schoolId):
 	bookCount = 0
 #		bookCount = 0
 	for title in title_array:
-#		title = title_array[0]
+#		title = title_array[38]
 		bookCount += 1
 		print "Book number " + str(bookCount) + " of " + str(len(title_array))
 
@@ -197,8 +203,12 @@ def searchWithTitles(title_array,bookarray,extrabooksarray,school,schoolId):
 							print link
 							priceLink = getPriceLinkFromLink(link,school)	
 							book = getBookInfoFromPage(priceLink,school) 
-							book.title = str(titleOfBookInLoop).replace("&amp;","&")
-							if (title == titleOfBookInLoop):
+							book.title = str(title)
+							if (book.ISBN == "NONE"):
+								retryarray.append(book)
+								print "Book Added to Retry Array"
+								continue
+							elif (title == titleOfBookInLoop):
 								if (ifBookIsOnBuyBack(book,school,schoolId)):
 									print "Book Added to Book Array"
 									bookarray.append(book)
@@ -217,12 +227,38 @@ def searchWithTitles(title_array,bookarray,extrabooksarray,school,schoolId):
 def ifBookIsOnBuyBack(book, school,schoolId):
 	url = "http://" + school + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=" + schoolId + "&catalogId=10001&isbn=" + str(book.ISBN) + "&author=&title=&x=44&y=20"
 	soup = getSoup(url)
-
+	#print soup
 	print "Buyback check: " + book.title + ": " + url
+	if " " in book.title:
+		regex = re.compile(" .+")
+		matchSpace = regex.search(book.title)
+		if (matchSpace):
+			shortTitle = str(book.title).replace(matchSpace.group(),"")
+	if "." in book.title:
+		regex = re.compile("\..+")
+		matchPeriod = regex.search(shortTitle)
+		if (matchPeriod):
+			matchPeriod = matchPeriod.group()
+			periodTitle = str(shortTitle).replace(matchPeriod,"")
+
 	for div in soup.findAll("div"):
 		if book.title in div.text:
 			print "Match Found"
 			return True
+		elif book.title.replace("&","&amp;") in div.text:
+			print "Match Found"
+			return True
+		elif (shortTitle):
+			if shortTitle in div.text:
+				print "Match Found"
+				return True
+			elif shortTitle.replace("&","&amp;") in div.text:
+				print "Match Found"
+				return True
+		elif (periodTitle):
+			if periodTitle in div.text:
+				print "Match Found"
+				return True
 		else:
 			print "."
 	return False
@@ -250,8 +286,7 @@ def getBookInfoFromPage(link,school):
 			book.edition = str(getEditionFromSoup(soup))
 		if (book.course == "NONE"):	
 			book.course = str(getCourseFromSoup(soup))
-	
-	print "Book Info Successfully Stored"
+		print "Book Info Stored"
 	return book
 
 def getPriceLinkFromLink(link,school):
@@ -267,7 +302,10 @@ def getPriceLinkFromLink(link,school):
 				price_link = price_link.replace("refreshTBDisplay('","")
 				price_link = price_link.replace("');","")
 				print "URL for Prices: " + price_link
-				return price_link
+				if "Add2" in price_link:
+					print "Add2 found"
+				else:
+					return price_link
 		except:
 			print "."
 	return
@@ -354,6 +392,8 @@ def getCourseFromSoup(soup):
 				course = str(match).replace("Select","")
 				return course 
 		
+		emptyString = "NONE"
+		return str(emptyString)
 	except:
 		print "Course Error"
 		emptyString = "NONE"
@@ -370,6 +410,8 @@ def getEditionFromSoup(soup):
 				match = str(match).replace("Publisher","")
 				edition = str(match)
 				return edition 
+		emptyString = "NONE"
+		return str(emptyString)
 	except:
 		print "Edition ERROR"
 		emptyString = "NONE"
@@ -384,6 +426,8 @@ def getISBNFromSoup(soup):
 				match = re.sub("\D", "", str(match))
 				ISBN = str(match)	
 				return ISBN
+		emptyString = "NONE"
+		return str(emptyString)
 	except:
 		print "ISBN ERROR"
 		emptyString = "NONE"
@@ -426,6 +470,8 @@ while (pause_script != "q"):
 	page_results_increment_by_ten = 0
 	Book_Array = []
 	Extra_Books_Array = []
+	Retry_Array = []
+	retryTitles = []
 
 	SCHOOL = raw_input("School:")
 	excelFileName = raw_input("Enter name you wish to use for the exported excel file: ")
@@ -434,15 +480,22 @@ while (pause_script != "q"):
 
 	schoolId = getSchoolID(SCHOOL) 
 	titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId)
-	Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array,SCHOOL,schoolId)
+	Book_Array = searchWithTitles(titleArray,Book_Array,Extra_Books_Array,Retry_Array,SCHOOL,schoolId)
+
+	retryTitles = getRetryTitleArray(Retry_Array)
+	Book_Array = searchWithTitles(retryTitles,Book_Array,Extra_Books_Array,Retry_Array,SCHOOL,schoolId)
+		
 
 	storeAmazonInfo(Book_Array)
 	for book in Extra_Books_Array:
 		print book.ISBN
 	storeAmazonInfo(Extra_Books_Array)
+	storeAmazonInfo(Retry_Array)
 
 	displayResults(Book_Array)
 	displayResults(Extra_Books_Array)
+
+	displayResults(Retry_Array)
 
 
 	createExcel(Book_Array,excelFileName)
