@@ -10,6 +10,42 @@ class BookInfo:
 	pass
 
 # GENERAL
+def makeProfit(usedPrice,amzPrice):
+	usedPrice = str(usedPrice).replace("$","")
+	amzPrice = str(amzPrice).replace("$","")
+
+	if (is_number(usedPrice) & is_number(amzPrice)):
+		usedPrice = decFormat(usedPrice)/2
+		amzPrice = decFormat(amzPrice) + 8
+		profit = usedPrice / amzPrice
+		return profit
+	else:
+		return "NONE"
+
+def makeCost(price):
+	price = str(price).replace("$","")
+	if (is_number(price)):
+		cost = decFormat(price) + 8
+		return cost
+	else:
+		return "NONE"
+
+def makeRevenue(price):
+	price = str(price).replace("$","")
+	if (is_number(price)):
+		revenue = decFormat(price)/2
+		return revenue
+	else:
+		return "NONE"
+
+def decFormat(number):
+	number = str(number).replace("$","")
+	if (is_number(number)):
+		number = Decimal(number)
+		return number 
+	else:
+		return ""
+
 def getSoup(URL):
 	while (True):
 		try:
@@ -105,7 +141,10 @@ def createExcel(array, fileName):
 	return
 
 def addToExcelText(book):
-	text = "\n" + book.title + "\t\t" + book.ISBN + "\t" + book.course + "\t" + book.edition + "\t" + book.usedPrice + "\t" + book.newPrice + "\t" + book.amzNew + "\t" + book.amzUsd
+	revenue = (makeRevenue(book.usedPrice))
+	cost = (makeCost(book.amzUsd))
+	profitRatio = (makeProfit(book.usedPrice,book.amzUsd))
+	text = "\n" + book.title + "\t" + book.ISBN + "\t" + book.course + "\t" + book.edition + "\t" + book.usedPrice + "\t" + book.newPrice + "\t" + book.amzNew + "\t" + book.amzUsd + "\t" + str(revenue) + "\t" + str(cost) + "\t" + str(profitRatio)
 	return text
 
 
@@ -166,8 +205,8 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId):
 	total_books = 0
 	title_array = []
 	temp_array = []
-	#while (True):
-	while (page_results_increment_by_ten < 10):
+	while (True):
+	#while (page_results_increment_by_ten < 10):
 		url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=" + schoolId + "&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 		print "Total Book Titles Collected: " + str(total_books)
