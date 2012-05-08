@@ -47,13 +47,14 @@ def getRetryTitleArray(retryarray):
 	return titleArray
 
 def makeShortTitles(bookArray):
+	print "Making Short Book Titles..."
 	for book in bookArray:
-		book.tempTitle = book.title
 		regex = re.compile("\w+[^\W]")
 		match = regex.search(book.title)
 		if (match):
 			match = match.group()
 			book.title = match
+			print "Short title: " + book.title
 
 # PRINTING DATA
 def printBook(book,number):
@@ -165,8 +166,8 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId):
 	total_books = 0
 	title_array = []
 	temp_array = []
-	while (True):
-	#while (page_results_increment_by_ten < 10):
+	#while (True):
+	while (page_results_increment_by_ten < 10):
 		url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=" + schoolId + "&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 		print "Total Book Titles Collected: " + str(total_books)
@@ -206,11 +207,11 @@ def searchWithTitles(title_array,bookarray,extrabooksarray,retryarray,school,sch
 	bookCount = 0
 #		bookCount = 0
 	for bookFromArray in title_array:
-#		bookFromArray = title_array[0]
+#		bookFromArray = title_array[10]
 		bookCount += 1
 		print "Book number " + str(bookCount) + " of " + str(len(title_array))
 
-		title_url = str(bookFromArray.tempTitle).replace("&amp;","%26")	
+		title_url = str(bookFromArray.title).replace("&amp;","%26")	
 		title_url = title_url.replace(" ","+")
 		title_url = title_url.replace(":","%3A")
 		title_url = title_url.replace("/","%2F")
@@ -519,7 +520,7 @@ while (pause_script != "q"):
 		searchWithTitles(Retry_Array,Book_Array,Extra_Books_Array,retryTitles,SCHOOL,schoolId)
 		for book in Retry_Array:
 			booksWithTitles.append(book)
-			print "Added " + book.title + " to booksWithTitles"
+			print "Added " + book.tempTitle + " to booksWithTitles"
 		Retry_Array = retryTitles
 
 	booksWithTitles = set(booksWithTitles)
