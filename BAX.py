@@ -85,13 +85,20 @@ def getRetryTitleArray(retryarray):
 def makeShortTitles(bookArray):
 	print "Making Short Book Titles..."
 	for book in bookArray:
-		regex = re.compile("\w+[^\W]")
-		match = regex.search(book.title)
-		if (match):
-			match = match.group()
-			book.title = match
-			print "Short title: " + book.title
+#		regex = re.compile("\w+[^\W]")
+#		match = regex.search(book.title)
+	#	if (match):
+	#		match = match.group()
+	#		book.title = match
+	#		print "Short title: " + book.title
+		while (len((book.title).split()) > 1):
+			string = re.sub("[^A-Za-z\d]"," ", book.title)	
+			string = string.split()
+			string.remove(string[len(string)/2])
+			string = " ".join(string)
+			book.title = string
 
+	
 # PRINTING DATA
 def printBook(book,number):
 	print "-" * 181
