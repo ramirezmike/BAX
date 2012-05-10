@@ -1,8 +1,9 @@
 This is a script I made for a friend. It takes prices from bncollege.com's buyback page for the selected college and also scrapes prices from amazon for each book. Then it exports all the data into an excel file.
 
-V1.4
+V1.4.1
 
 FEATURES:
+	-NOW NO DUPLICATES (maybe)
 	-scrapes all books in buyback pages
 	-outputs ALL books regardless of found content
 	-script now retries books by altering titles to increase chance of results 	
