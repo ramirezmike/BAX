@@ -225,7 +225,8 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId):
 						print "Title Found: ",
 						temp_string = td.text.replace("TITLE:","")
 						print temp_string 
-						temp_array.append(temp_string)
+						if((temp_string in title_array) == False):
+							temp_array.append(temp_string)
 						count+=1
 						total_books+=1
 				except:
