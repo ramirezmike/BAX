@@ -98,12 +98,12 @@ def printBook(book,number):
 	print "-" * 181
 	print str(number).rjust(3," "),
 	try:
-		print book.title.ljust(50," "), 
+		print book.tempTitle.ljust(50," "), 
 		print book.ISBN.ljust(15," ") + book.edition.ljust(8," ") + book.course.ljust(30," ") + "|".ljust(5," "),
 		print book.usedPrice.ljust(8," ") + book.newPrice.ljust(10," ") + "$" + book.amzNew.ljust(8," ") + "$" + book.amzUsd.ljust(6," ")	
 
 	except:
-		print "Error on " + book.title
+		print "Error on " + book.tempTitle
 		print book.ISBN
 		print book.edition
 		print book.course
@@ -145,7 +145,7 @@ def addToExcelText(book):
 	revenue = (makeRevenue(book.usedPrice))
 	cost = (makeCost(book.amzUsd))
 	profitRatio = (makeProfit(book.usedPrice,book.amzUsd))
-	text = "\n" + book.title + "\t" + book.ISBN + "\t" + book.course + "\t" + book.edition + "\t" + book.usedPrice + "\t" + book.newPrice + "\t" + book.amzNew + "\t" + book.amzUsd + "\t" + str(revenue) + "\t" + str(cost) + "\t" + str(profitRatio)
+	text = "\n" + book.tempTitle + "\t" + book.ISBN + "\t" + book.course + "\t" + book.edition + "\t" + book.usedPrice + "\t" + book.newPrice + "\t" + book.amzNew + "\t" + book.amzUsd + "\t" + str(revenue) + "\t" + str(cost) + "\t" + str(profitRatio)
 	return text
 
 
@@ -161,7 +161,7 @@ def removeDuplicateBooks(bookArray,retryArray):
 	tempArray = bookArray
 	for book in tempArray:
 		for retryBook in retryArray:
-			if (book.title == retryBook.title):
+			if (book.tempTitle == retryBook.tempTitle):
 				bookArray.remove(book)
 
 def makeBooksFromTitleArray(titleArray):
@@ -207,7 +207,7 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId):
 	title_array = []
 	temp_array = []
 	while (True):
-	#while (page_results_increment_by_ten < 10):
+#	while (page_results_increment_by_ten < 10):
 		url = "http://" + SCHOOL + ".bncollege.com/webapp/wcs/stores/servlet/BuyBackSearchCommand?extBuyBackSearchEnabled=Y&displayImage=N+&langId=-1&storeId=" + schoolId + "&catalogId=10001&isbn=&author=&title=%22+%22&start=" + str(page_results_increment_by_ten)
 
 		print "Total Book Titles Collected: " + str(total_books)
@@ -269,26 +269,29 @@ def searchWithTitles(title_array,bookarray,extrabooksarray,retryarray,school,sch
 					match = regex.search(td.text)
 					match = re.sub("DESCRIPTION:", "", match.group())
 					titleOfBookInLoop = str(match).replace("AUTHOR","")
-					print "TITLE OF BOOK IN LOOP: " + titleOfBookInLoop
 
-					for link in td.findAll("a"):
-						if "TextbookDetailView" in link.get('href'):
-							print "Book Link Found"
-							link = str(link.get('href')).replace("&amp;","&")
-							print link
-							priceLink = getPriceLinkFromLink(link,school)	
-							bookFromArray = getBookInfoFromPage(priceLink,school,bookFromArray) 
-##### CHANGED UNTIL THIS LINE
-							if (bookFromArray.ISBN == "NONE"):
-								retryarray.append(bookFromArray)
-								print "Book Added to Retry Array"
-							elif (bookFromArray.tempTitle == titleOfBookInLoop):
-								if (ifBookIsOnBuyBack(bookFromArray,school,schoolId) == False):
-									print "Book Added to Extra Book Array"
-									extrabooksarray.append(bookFromArray)
-									
-							else:
-								print "Book Successfully Stored"
+					if (bookFromArray.tempTitle == titleOfBookInLoop):
+						print "TITLE OF BOOK IN LOOP: " + titleOfBookInLoop
+
+						for link in td.findAll("a"):
+							if "TextbookDetailView" in link.get('href'):
+								print "Book Link Found"
+								link = str(link.get('href')).replace("&amp;","&")
+								print link
+								priceLink = getPriceLinkFromLink(link,school)	
+								bookFromArray = getBookInfoFromPage(priceLink,school,bookFromArray) 
+								if (bookFromArray.ISBN == "NONE"):
+									retryarray.append(bookFromArray)
+									print "Book Added to Retry Array"
+								elif (bookFromArray.tempTitle == titleOfBookInLoop):
+									if (ifBookIsOnBuyBack(bookFromArray,school,schoolId) == False):
+										print "Book Added to Extra Book Array"
+										extrabooksarray.append(bookFromArray)
+										
+								else:
+									print "Book Successfully Stored"
+					else:
+						print "Wrong book.."
 				else:
 					print "."
 			except:
@@ -345,18 +348,19 @@ def getBookInfoFromPage(link,school,book):
 	print "Book info page: " + url
 	print "Price Page Soup Made"
 
-	for i in range(0,2):
-		if (book.usedPrice == "NONE"):	
-			book.usedPrice = str(getUsedPriceFromSoup(soup))
-		if (book.newPrice == "NONE"):	
-			book.newPrice = str(getNewPriceFromSoup(soup))
-		if (book.ISBN == "NONE"):	
-			book.ISBN = str(getISBNFromSoup(soup))
-		if (book.edition == "NONE"):	
-			book.edition = str(getEditionFromSoup(soup))
-		if (book.course == "NONE"):	
-			book.course = str(getCourseFromSoup(soup))
-		print "Book Info Stored"
+	if (checkBookTitle(soup,book)):
+		for i in range(0,2):
+			if (book.usedPrice == "NONE"):	
+				book.usedPrice = str(getUsedPriceFromSoup(soup))
+			if (book.newPrice == "NONE"):	
+				book.newPrice = str(getNewPriceFromSoup(soup))
+			if (book.ISBN == "NONE"):	
+				book.ISBN = str(getISBNFromSoup(soup))
+			if (book.edition == "NONE"):	
+				book.edition = str(getEditionFromSoup(soup))
+			if (book.course == "NONE"):	
+				book.course = str(getCourseFromSoup(soup))
+			print "Book Info Stored"
 	return book
 
 def getPriceLinkFromLink(link,school):
@@ -487,6 +491,20 @@ def getEditionFromSoup(soup):
 		emptyString = "NONE"
 		return str(emptyString)
 
+def checkBookTitle(soup,book):
+        try:    
+                for img in soup.findAll("img"):
+                        if (img.get("title")):
+                                if (str(book.tempTitle).replace("&amp;","&") == img.get("title")):
+                                        print "Title Check Success"          
+                                        return True           
+                        else:                                  
+                                 print "."              
+		return False
+                                   
+        except:  
+                 print "TITLE ERROR"
+				
 def getISBNFromSoup(soup):
 	try:
 		for div in soup.findAll("div"):
@@ -556,6 +574,7 @@ while (pause_script != "q"):
 #	removeDuplicateBooks(booksWithTitles,Retry_Array)
 	for i in range(0,2):
 		print "RETRYING..."
+		Retry_Array = set(Retry_Array)
 		retryTitles = []
 		makeShortTitles(Retry_Array)
 		searchWithTitles(Retry_Array,Book_Array,Extra_Books_Array,retryTitles,SCHOOL,schoolId)
@@ -565,6 +584,7 @@ while (pause_script != "q"):
 		Retry_Array = retryTitles
 
 	booksWithTitles = set(booksWithTitles)
+	retryTitles = set(retryTitles)
 	
 	for book in booksWithTitles:
 		book.title = book.tempTitle
