@@ -279,17 +279,24 @@ def searchWithTitles(title_array,bookarray,extrabooksarray,retryarray,school,sch
 								link = str(link.get('href')).replace("&amp;","&")
 								print link
 								priceLink = getPriceLinkFromLink(link,school)	
-								bookFromArray = getBookInfoFromPage(priceLink,school,bookFromArray) 
-								if (bookFromArray.ISBN == "NONE"):
-									retryarray.append(bookFromArray)
-									print "Book Added to Retry Array"
-								elif (bookFromArray.tempTitle == titleOfBookInLoop):
-									if (ifBookIsOnBuyBack(bookFromArray,school,schoolId) == False):
-										print "Book Added to Extra Book Array"
-										extrabooksarray.append(bookFromArray)
-										
+								if (priceLink):
+									bookFromArray = getBookInfoFromPage(priceLink,school,bookFromArray) 
+									if (bookFromArray.ISBN == "NONE"):
+										retryarray.append(bookFromArray)
+										print "Book Added to Retry Array"
+									elif (bookFromArray.tempTitle == titleOfBookInLoop):
+										if (ifBookIsOnBuyBack(bookFromArray,school,schoolId) == False):
+											print "Book Added to Extra Book Array"
+											extrabooksarray.append(bookFromArray)
+											
+									else:
+										print "Book Successfully Stored"
 								else:
-									print "Book Successfully Stored"
+									print "Book Price Page Not Found... Getting ISBN"
+									bookPageURL = "http://" + school + ".bncollege.com" + link
+									bookInfoSoup = getSoup(bookPageURL)
+									bookFromArray.ISBN = getISBNFromSoup(bookInfoSoup)
+									print "ISBN Saved"
 					else:
 						print "Wrong book.."
 				else:
@@ -380,6 +387,8 @@ def getPriceLinkFromLink(link,school):
 					print "Add2 found"
 				else:
 					return price_link
+			else:
+				print "."
 		except:
 			print "."
 	return
