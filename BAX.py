@@ -562,56 +562,76 @@ def getNewPriceFromSoup(soup):
 		emptyString = "NONE"
 		return str(emptyString)
 
+
+# start of script. Create schedule of schools
+
 pause_script = ""
 while (pause_script != "q"):
-	page_results_increment_by_ten = 0
-	Book_Array = []
-	Extra_Books_Array = []
-	Retry_Array = []
+	Schools = []
+	Excel_Names = []
 
-	SCHOOL = raw_input("School:")
-	excelFileName = raw_input("Enter name you wish to use for the exported excel file: ")
+	numberOfSchools = raw_input("How many schools will be scraped: ")
+	for i in range(0,int(numberOfSchools)):
+		schoolName = raw_input("Name of School Number " + str(i) + ": ")
+		Schools.append(schoolName)	
+		excelFileName = raw_input("Enter name you wish to use for this school's exported excel file: ")
+		Excel_Names.append(excelFileName)
+		print "School " + schoolName + " saved."
+		
+	i = 0
+	for school in Schools: 
+		print school + " will be saved as " + Excel_Names[i] 
+		i+=1
+	schoolSelection = 0
+	for school in Schools:
+			page_results_increment_by_ten = 0
+			Book_Array = []
+			Extra_Books_Array = []
+			Retry_Array = []
 
-	startTime = time.time()
+			SCHOOL = Schools[schoolSelection]
+			excelFileName = Excel_Names[schoolSelection]
 
-	schoolId = getSchoolID(SCHOOL) 
-	titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId)
-	booksWithTitles = makeBooksFromTitleArray(titleArray)
-	searchWithTitles(booksWithTitles,Book_Array,Extra_Books_Array,Retry_Array,SCHOOL,schoolId)
+			startTime = time.time()
 
-
-#	removeDuplicateBooks(booksWithTitles,Retry_Array)
-	for i in range(0,2):
-		print "RETRYING..."
-		Retry_Array = set(Retry_Array)
-		retryTitles = []
-		makeShortTitles(Retry_Array)
-		searchWithTitles(Retry_Array,Book_Array,Extra_Books_Array,retryTitles,SCHOOL,schoolId)
-		for book in Retry_Array:
-			booksWithTitles.append(book)
-			print "Added " + book.tempTitle + " to booksWithTitles"
-		Retry_Array = retryTitles
-
-	booksWithTitles = set(booksWithTitles)
-	retryTitles = set(retryTitles)
-	
-	for book in booksWithTitles:
-		book.title = book.tempTitle
-		print book.title
-
-	storeAmazonInfo(booksWithTitles)
-	storeAmazonInfo(Extra_Books_Array)
-	storeAmazonInfo(retryTitles)
-
-	displayResults(booksWithTitles)
-	displayResults(Extra_Books_Array)
-
-	displayResults(retryTitles)
+			schoolId = getSchoolID(SCHOOL) 
+			titleArray = getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId)
+			booksWithTitles = makeBooksFromTitleArray(titleArray)
+			searchWithTitles(booksWithTitles,Book_Array,Extra_Books_Array,Retry_Array,SCHOOL,schoolId)
 
 
-	createExcel(booksWithTitles,excelFileName)
+		#	removeDuplicateBooks(booksWithTitles,Retry_Array)
+			for i in range(0,2):
+				print "RETRYING..."
+				Retry_Array = set(Retry_Array)
+				retryTitles = []
+				makeShortTitles(Retry_Array)
+				searchWithTitles(Retry_Array,Book_Array,Extra_Books_Array,retryTitles,SCHOOL,schoolId)
+				for book in Retry_Array:
+					booksWithTitles.append(book)
+					print "Added " + book.tempTitle + " to booksWithTitles"
+				Retry_Array = retryTitles
 
-	elapsedTime = time.time() - startTime
-	print "Elapsed Time: " + str(elapsedTime) + "(s)"
+			booksWithTitles = set(booksWithTitles)
+			retryTitles = set(retryTitles)
+			
+			for book in booksWithTitles:
+				book.title = book.tempTitle
+				print book.title
 
+			storeAmazonInfo(booksWithTitles)
+			storeAmazonInfo(Extra_Books_Array)
+			storeAmazonInfo(retryTitles)
+
+			displayResults(booksWithTitles)
+			displayResults(Extra_Books_Array)
+
+			displayResults(retryTitles)
+
+
+			createExcel(booksWithTitles,excelFileName)
+
+			elapsedTime = time.time() - startTime
+			print "Elapsed Time: " + str(elapsedTime) + "(s)"
+			schoolSelection += 1
 	pause_script = raw_input("Enter 'q' to quit, or enter anything else to restart the script: ")
