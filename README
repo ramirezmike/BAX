@@ -1,16 +1,32 @@
 This is a script I made for a friend. It takes prices from bncollege.com's buyback page for the selected college and also scrapes prices from amazon for each book. Then it exports all the data into an excel file.
 
-V1.5
+V1.6 (maybe?)
 
 BugFixes:
 	-If a book page doesn't exist, the excel file will show "NONE" instead of incorrect data
 
 FEATURES:
+	V1.6
+	-scheduler added!! (instructions below)
+	(previous)
 	-scrapes all books in buyback pages
 	-outputs ALL books regardless of found content
 	-script now retries books by altering titles to increase chance of results 	
 	-excel output contains extra columns showing profit, cost and profit ratio
 
 Planned Features:
-	-schedule multiple schools to scrape in a row
 	-add colors to generated excel sheet
+
+
+How To:
+
+The script starts by asking how many schools to scrape in a row.
+
+*IMPORTANT* Please put ONLY a number in this question. Otherwise the script will crash.
+
+After the number of schools has been determined the script will ask for a school name and an excel name for each one.
+
+School Name = name used by the website in its URL for the school, so don't put "Santa Fe College," put "santafe," otherwise you won't get any results.
+Excel Name = title of the exported excel file.
+
+After the script has the information, it'll run through all the schools in order and export an excel file for each one based on the inserted excel name. Once the script has finished going through your scheduled school list, it'll ask if you want to start a new schedule or if you want to quit by pressing 'q.'
