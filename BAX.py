@@ -157,6 +157,12 @@ def exportToExcel(school,text):
 	return
 
 # BNCOLLEGE 
+def checkForJavascriptBug(string):
+    if (string == "JAVASCRIPT:WEB WARRIOR SERIES"):
+        print "Book title had javascript; fixed."
+        string = "JAVASCRIPT"
+    return string
+
 def removeDuplicateBooks(bookArray,retryArray):
 	tempArray = bookArray
 	for book in tempArray:
@@ -225,6 +231,7 @@ def getBookTitles(page_results_increment_by_ten,SCHOOL,schoolId):
 						print "Title Found: ",
 						temp_string = td.text.replace("TITLE:","")
 						print temp_string 
+						temp_string = checkForJavascriptBug(temp_string) 
 						if((temp_string in title_array) == False):
 							temp_array.append(temp_string)
 						count+=1
